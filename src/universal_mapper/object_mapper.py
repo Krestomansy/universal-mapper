@@ -26,7 +26,7 @@ type MappingType = Callable[[Any], Any] | dict[str | int, Callable[[Any], Any] |
 T = TypeVar("T")
 
 
-class _MapperWrapper:
+class _NullableMapperWrapper:
     """Handle the second part of the mapping process, `.to()`."""
 
     def __init__(self, from_instance: Any, mapper: ObjectMapper) -> None:
@@ -34,14 +34,14 @@ class _MapperWrapper:
         self._mapper = mapper
 
     @overload
-    def to(self, to_class_or_instance: type[T]) -> T:
+    def to(self, to_class_or_instance: type[T]) -> T | None:
         """Map an object to the specified class."""
 
     @overload
-    def to(self, to_class_or_instance: T) -> T:
+    def to(self, to_class_or_instance: T) -> T | None:
         """Update the fields of the specified object."""
 
-    def to(self, to_class_or_instance: type[T] | T) -> T:
+    def to(self, to_class_or_instance: type[T] | T) -> T | None:
         """Map to the specified class or update the fields of the specified object."""
         _visited_ids_stack: set[int] = set()
         return self._mapper._map_internal(
@@ -49,6 +49,17 @@ class _MapperWrapper:
             TypeExtractor(to_class_or_instance),
             _visited_ids_stack,
         )
+
+
+class _MapperWrapper(_NullableMapperWrapper):
+    @overload
+    def to(self, to_class_or_instance: type[T]) -> T: ...
+
+    @overload
+    def to(self, to_class_or_instance: T) -> T: ...
+
+    def to(self, to_class_or_instance: type[T] | T) -> T:
+        return cast(T, super().to(to_class_or_instance))
 
 
 class ObjectMapper:
@@ -71,7 +82,9 @@ class ObjectMapper:
     ) -> MappingAccessor[T, Any, Any]:
         return cls.__accessor_factory.get(target)
 
-    def add_mapping(self, map_to: type[T], mapping: MappingType) -> None:
+    def add_mapping(
+        self, map_to: type[T], mapping: Callable[[Any], T] | dict[str | int, Callable[[Any], Any] | None]
+    ) -> None:
         """Add or overwrite a mapping rule."""
         self._mappings[map_to] = mapping
 
@@ -129,8 +142,16 @@ class ObjectMapper:
 
         raise TypeMismatchError(source_type=source.type, target_type=target.type)
 
-    def map(self, from_instance: Any) -> _MapperWrapper:
+    @overload
+    def map(self, from_instance: None) -> _NullableMapperWrapper: ...
+
+    @overload
+    def map(self, from_instance: T) -> _MapperWrapper: ...
+
+    def map(self, from_instance: object) -> _NullableMapperWrapper:
         """Start mapping from an object."""
+        if from_instance is None:
+            return _NullableMapperWrapper(from_instance, self)
         return _MapperWrapper(from_instance, self)
 
     def _map_internal(

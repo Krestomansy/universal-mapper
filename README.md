@@ -6,9 +6,29 @@ The library requires Python 3.12 or later. It supports ordinary Python objects, 
 
 ## License
 
-Distributed under the [MIT License](LICENSE).
+Distributed under the [MIT License](https://github.com/Krestomansy/universal-mapper/blob/main/LICENSE).
+
+## Installation
+
+Install the package with pip:
+
+```bash
+pip install universal-mapper
+```
+
+To install an optional integration, choose the corresponding extra:
+
+```bash
+pip install 'universal-mapper[pydantic]'
+pip install 'universal-mapper[sqlalchemy]'
+pip install 'universal-mapper[pydantic,sqlalchemy]'
+```
 
 ## Versions
+
+### 1.0.2 — 23.11.2026
+
+- Improved type annotations for compatibility with type checkers.
 
 ### 1.0.1 — 23.11.2026
 
