@@ -1,0 +1,13 @@
+name: Pull request
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml

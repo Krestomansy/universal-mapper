@@ -1,0 +1,89 @@
+name: Checks and build
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        id: sync
+        run: uv sync --locked --all-extras --dev
+      - name: Lint
+        run: uv run --no-sync ruff check . --output-format=github
+      - name: Type check
+        if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
+        run: |
+          mkdir -p reports
+          uv run --no-sync mypy --no-color-output --show-column-numbers src tests 2>&1 | tee reports/mypy.txt
+      - name: Annotate type errors
+        if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
+        run: uv run --no-sync python .github/scripts/mypy_annotations.py reports/mypy.txt
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13', '3.14']
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --locked --all-extras --dev
+      - name: Test with coverage
+        run: >-
+          uv run --no-sync pytest
+          --cov-report=xml:tests/results/coverage.xml
+          --cov-report=html:tests/results/htmlcov
+          --cov-report=markdown-append:$GITHUB_STEP_SUMMARY
+      - name: Publish test results
+        if: ${{ !cancelled() && hashFiles('tests/results/junit.xml') != '' }}
+        uses: mikepenz/action-junit-report@v6.6.1
+        with:
+          report_paths: tests/results/junit.xml
+          check_name: Test results (Python ${{ matrix.python-version }})
+          annotate_only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+      - name: Upload test and coverage reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-reports-python-${{ matrix.python-version }}
+          path: |
+            tests/results/junit.xml
+            tests/results/lcov.info
+            tests/results/coverage.xml
+            tests/results/htmlcov/
+          if-no-files-found: warn
+
+  build:
+    needs: [lint-and-typecheck, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          python-version: '3.12'
+      - name: Build distributions
+        run: uv build
+      - uses: actions/upload-artifact@v5
+        with:
+          name: python-distributions
+          path: dist/
+          if-no-files-found: error
