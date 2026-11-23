@@ -82,6 +82,17 @@ jobs:
           python-version: '3.12'
       - name: Build distributions
         run: uv build
+      - name: Verify wheel includes typing marker
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel, = Path('dist').glob('*.whl')
+          with ZipFile(wheel) as archive:
+              if 'universal_mapper/py.typed' not in archive.namelist():
+                  raise SystemExit('Wheel is missing universal_mapper/py.typed')
+          PY
       - uses: actions/upload-artifact@v5
         with:
           name: python-distributions

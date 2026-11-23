@@ -37,6 +37,14 @@ class SomeOtherObject:
 
 
 class TestObjectMapper:
+    def test_none_source_and_custom_mapping(self) -> None:
+        """Map a None source directly and with a custom mapping function."""
+        mapper = ObjectMapper()
+        assert mapper.map(None).to(str) is None
+
+        mapper.add_mapping(str, lambda source: "missing" if source is None else str(source))
+        assert mapper.map(None).to(str) == "missing"
+
     def test_automapping_nested_generic_objects(self) -> None:
         """Map ordinary Python objects containing nested objects."""
         # Arrange
