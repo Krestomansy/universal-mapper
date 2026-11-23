@@ -1,12 +1,18 @@
 [project]
 name = "universal-mapper"
-version = "1.0.0"
+version = "1.0.1"
 description = "A Python library for mapping data between objects, models, and collections"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Krestomansy/universal-mapper"
+Repository = "https://github.com/Krestomansy/universal-mapper"
+Documentation = "https://github.com/Krestomansy/universal-mapper/blob/main/docs/README.md"
+Issues = "https://github.com/Krestomansy/universal-mapper/issues"
 
 [project.optional-dependencies]
 pydantic = [

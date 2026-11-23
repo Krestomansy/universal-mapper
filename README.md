@@ -10,7 +10,11 @@ Distributed under the [MIT License](LICENSE).
 
 ## Versions
 
-### 1.0.0 — Unreleased
+### 1.0.1 — 23.11.2026
+
+- Fixed documentation links and project metadata.
+
+### 1.0.0 — 23.11.2026
 
 - Initial version with recursive mapping, object updates, and custom mapping rules.
 - Optional support for Pydantic and SQLAlchemy models.
@@ -127,7 +131,7 @@ result = mapper.map(Temperature(20.0)).to(TemperatureDto)
 assert result.fahrenheit == 68.0
 ```
 
-See the [documentation](docs/README.md) for more examples and details about integrations, collections, and error handling.
+See the [documentation](https://github.com/Krestomansy/universal-mapper/blob/main/docs/README.md) for more examples and details about integrations, collections, and error handling.
 
 ## Inspiration
 
