@@ -265,6 +265,7 @@ pip-selfcheck.json
 [Ll]ib64
 [Ll]ocal
 [Ss]cripts
+!/.github/scripts/
 
 # tests
 tests/results
